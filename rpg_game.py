@@ -1,11 +1,23 @@
 import tkinter as tk
 from tkinter import messagebox
-from player import Player
-from enemy import Enemy
-from battle_system import BattleSystem
-from scenes import SceneManager
-from visualization import GameVisualizer
-from ml_system import DifficultyAdjuster
+import sys
+import os
+
+# Adicionar diretório atual ao path
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+try:
+    from player import Player
+    from enemy import Enemy
+    from battle_system import BattleSystem
+    from scenes import SceneManager
+    from visualization import GameVisualizer
+    from ml_system import DifficultyAdjuster
+except ImportError as e:
+    print(f"Erro ao importar módulos: {e}")
+    print(f"Diretório atual: {os.getcwd()}")
+    print(f"Arquivos disponíveis: {os.listdir('.')}")
+    sys.exit(1)
 
 class RPGGame:
     def __init__(self):

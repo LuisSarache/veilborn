@@ -58,16 +58,17 @@ class BattleSystem:
                 except EOFError:
                     pass
                     
-            enemy_gif_path = os.path.join(self.gifs_path, "finalboss.gif")
-            if os.path.exists(enemy_gif_path):
-                enemy_gif = Image.open(enemy_gif_path)
-                try:
-                    while True:
-                        frame = enemy_gif.copy().resize((250, 250), Image.Resampling.LANCZOS)
-                        self.enemy_frames.append(ImageTk.PhotoImage(frame))
-                        enemy_gif.seek(len(self.enemy_frames))
-                except EOFError:
-                    pass
+            if "Boss" in self.enemy.name or "boss" in self.enemy.name.lower():
+                enemy_gif_path = os.path.join(self.gifs_path, "finalboss.gif")
+                if os.path.exists(enemy_gif_path):
+                    enemy_gif = Image.open(enemy_gif_path)
+                    try:
+                        while True:
+                            frame = enemy_gif.copy().resize((250, 250), Image.Resampling.LANCZOS)
+                            self.enemy_frames.append(ImageTk.PhotoImage(frame))
+                            enemy_gif.seek(len(self.enemy_frames))
+                    except EOFError:
+                        pass
         except:
             pass
         

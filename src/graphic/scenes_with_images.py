@@ -47,7 +47,7 @@ class SceneManagerWithImages:
             loading_path = os.path.join(self.gifs_path, "loading.gif")
             if os.path.exists(loading_path):
                 img = Image.open(loading_path)
-                img = img.resize((100, 100), Image.Resampling.LANCZOS)
+                img = img.resize((200, 200), Image.Resampling.LANCZOS)
                 self.images["loading"] = ImageTk.PhotoImage(img)
             
             # GIF do Boss animado
@@ -70,7 +70,7 @@ class SceneManagerWithImages:
                 self.player_frames = []
                 try:
                     while True:
-                        frame = self.player_gif.copy().resize((150, 150), Image.Resampling.LANCZOS)
+                        frame = self.player_gif.copy().resize((180, 180), Image.Resampling.LANCZOS)
                         self.player_frames.append(ImageTk.PhotoImage(frame))
                         self.player_gif.seek(len(self.player_frames))
                 except EOFError:
@@ -84,7 +84,7 @@ class SceneManagerWithImages:
         if hasattr(self, 'player_frames') and len(self.player_frames) > 0:
             self.canvas.itemconfig(self.player_sprite, image=self.player_frames[self.current_frame])
             self.current_frame = (self.current_frame + 1) % len(self.player_frames)
-            self.animation_id = self.root.after(100, self.animate_player)
+            self.animation_id = self.root.after(150, self.animate_player)
     
     def animate_boss(self):
         if hasattr(self, 'boss_frames') and len(self.boss_frames) > 0:
@@ -167,14 +167,13 @@ class SceneManagerWithImages:
     def setup_scene2(self):
         self.canvas.delete("all")
         
-        # Fundo da cena 2
         if "cena2" in self.images:
             self.canvas.create_image(640, 360, image=self.images["cena2"])
         else:
             self.canvas.configure(bg="lightblue")
             self.canvas.create_rectangle(0, 300, 1280, 420, fill="gray")
         
-        self.canvas.create_text(640, 60, text="Cenário 2 - Caminho", fill="white", font=("Arial", 16), tags="ui")
+        self.canvas.create_text(640, 60, text="Cenário 2 - Caminho Sombrio", fill="white", font=("Arial", 16), tags="ui")
         
         self.player.x = 50
         if hasattr(self, 'player_frames') and len(self.player_frames) > 0:
@@ -196,6 +195,7 @@ class SceneManagerWithImages:
                 if hasattr(self, 'animation_id'):
                     self.root.after_cancel(self.animation_id)
                 return "spawn_enemy"
+        return None
                 
     def transition_to_scene3(self):
         self.show_loading()
@@ -204,12 +204,53 @@ class SceneManagerWithImages:
     def setup_scene3(self):
         self.canvas.delete("all")
         
+        if "cena3" in self.images:
+            self.canvas.create_image(640, 360, image=self.images["cena3"])
+        else:
+            self.canvas.configure(bg="gray")
+        
+        self.canvas.create_text(640, 60, text="Cenário 3 - Cidade Abandonada", fill="white", font=("Arial", 16), tags="ui")
+        
+        self.player.x = 50
+        if hasattr(self, 'player_frames') and len(self.player_frames) > 0:
+            self.player_sprite = self.canvas.create_image(self.player.x, self.player.y, image=self.player_frames[0])
+            self.animate_player()
+        else:
+            self.player_sprite = self.canvas.create_oval(self.player.x-15, self.player.y-15, 
+                                                        self.player.x+15, self.player.y+15, fill="blue")
+        
+        self.root.bind("<Key>", self.move_player_scene3)
+        self.root.focus_set()
+        
+    def move_player_scene3(self, event):
+        if event.keysym == "Right" and self.player.x < 1120:
+            self.player.move(10, 0)
+            self.canvas.coords(self.player_sprite, self.player.x, self.player.y)
+            if self.player.x >= 1120:
+                self.root.unbind("<Key>")
+                if hasattr(self, 'animation_id'):
+                    self.root.after_cancel(self.animation_id)
+                return "show_npc_dialog"
+        return None
+        
+    def continue_scene3(self):
+        self.transition_to_scene3()
+        
+    def move_to_scene4_key(self, event):
+        return None
+        
+    def transition_to_scene4(self):
+        self.show_loading()
+        self.root.after(1500, self.setup_scene4)
+        
+    def setup_scene4(self):
+        self.canvas.delete("all")
+        
         if "cemiterio" in self.images:
             self.canvas.create_image(640, 360, image=self.images["cemiterio"])
         
-        self.canvas.create_text(640, 60, text="Cenário 3 - Entrada do Cemitério", fill="white", font=("Arial", 16), tags="ui")
+        self.canvas.create_text(640, 60, text="Cenário 4 - Entrada do Cemitério", fill="white", font=("Arial", 16), tags="ui")
         
-        # Coveiro
         if "coveiro" in self.images:
             self.canvas.create_image(984, 420, image=self.images["coveiro"])
         else:
@@ -227,49 +268,7 @@ class SceneManagerWithImages:
         
         self.show_gravedigger_dialog()
         
-    def move_player_scene3(self, event):
-        return None
-        
-    def continue_scene3(self):
-        self.transition_to_scene4()
-        
-    def move_to_scene4_key(self, event):
-        return None
-        
-    def transition_to_scene4(self):
-        self.show_loading()
-        self.root.after(1500, self.setup_scene4)
-        
-    def setup_scene4(self):
-        self.canvas.delete("all")
-        
-        if "cena3" in self.images:
-            self.canvas.create_image(640, 360, image=self.images["cena3"])
-        else:
-            self.canvas.configure(bg="gray")
-        
-        self.canvas.create_text(640, 60, text="Cenário 4 - Cidade Abandonada", fill="white", font=("Arial", 16), tags="ui")
-        
-        self.player.x = 50
-        if hasattr(self, 'player_frames') and len(self.player_frames) > 0:
-            self.player_sprite = self.canvas.create_image(self.player.x, self.player.y, image=self.player_frames[0])
-            self.animate_player()
-        else:
-            self.player_sprite = self.canvas.create_oval(self.player.x-15, self.player.y-15, 
-                                                        self.player.x+15, self.player.y+15, fill="blue")
-        
-        self.root.bind("<Key>", self.move_player_scene4)
-        self.root.focus_set()
-        
     def move_player_scene4(self, event):
-        if event.keysym == "Right" and self.player.x < 1120:
-            self.player.move(10, 0)
-            self.canvas.coords(self.player_sprite, self.player.x, self.player.y)
-            if self.player.x >= 1120:
-                self.root.unbind("<Key>")
-                if hasattr(self, 'animation_id'):
-                    self.root.after_cancel(self.animation_id)
-                return "show_npc_dialog"
         return None
         
     def show_npc_dialog(self):
@@ -309,7 +308,7 @@ class SceneManagerWithImages:
         tk.Label(result_dialog, text=responses_dict[response], wraplength=350, justify="center").pack(pady=20)
         
         tk.Button(result_dialog, text="Continuar", 
-                 command=lambda: [result_dialog.destroy(), self.enter_cemetery()]).pack(pady=20)
+                 command=lambda: [result_dialog.destroy(), self.transition_to_scene4()]).pack(pady=20)
         
     def show_gravedigger_dialog(self):
         dialog = tk.Toplevel(self.root)

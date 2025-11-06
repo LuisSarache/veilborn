@@ -194,7 +194,7 @@ Dano Recebido: {stats['total_damage_taken']}"""
             
     def connect_scene_events(self):
         original_move_scene2 = self.scene_manager.move_player_scene2
-        original_move_scene4 = self.scene_manager.move_player_scene4
+        original_move_scene3 = self.scene_manager.move_player_scene3
         original_move_tomb = self.scene_manager.move_to_tomb
         
         def enhanced_move_scene2(event):
@@ -202,8 +202,8 @@ Dano Recebido: {stats['total_damage_taken']}"""
             if result == "spawn_enemy":
                 self.spawn_enemy_scene2()
                 
-        def enhanced_move_scene4(event):
-            result = original_move_scene4(event)
+        def enhanced_move_scene3(event):
+            result = original_move_scene3(event)
             if result == "show_npc_dialog":
                 self.scene_manager.show_npc_dialog()
                 
@@ -213,7 +213,7 @@ Dano Recebido: {stats['total_damage_taken']}"""
                 self.spawn_boss()
                 
         self.scene_manager.move_player_scene2 = enhanced_move_scene2
-        self.scene_manager.move_player_scene4 = enhanced_move_scene4
+        self.scene_manager.move_player_scene3 = enhanced_move_scene3
         self.scene_manager.move_to_tomb = enhanced_move_tomb
         
     def run(self):

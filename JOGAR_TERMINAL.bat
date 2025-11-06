@@ -1,4 +1,4 @@
 @echo off
-cd /d "%~dp0"
+cd src\terminal
 python main_terminal.py
 pause

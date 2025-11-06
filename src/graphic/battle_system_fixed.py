@@ -31,9 +31,12 @@ class BattleSystem:
         self.total_damage_taken = 0
         
         # Assets
-        base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        self.images_path = os.path.join(base_path, "images")
+        base_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        self.images_path = os.path.join(base_path, "assets_game", "images")
+        self.gifs_path = os.path.join(base_path, "assets_game", "gifs")
         self.battle_bg = None
+        self.player_frames = []
+        self.enemy_frames = []
         self.load_battle_assets()
         
     def load_battle_assets(self):
@@ -41,8 +44,30 @@ class BattleSystem:
             bg_path = os.path.join(self.images_path, "menu-batalha.png")
             if os.path.exists(bg_path):
                 img = Image.open(bg_path)
-                img = img.resize((800, 600), Image.Resampling.LANCZOS)
+                img = img.resize((1280, 720), Image.Resampling.LANCZOS)
                 self.battle_bg = ImageTk.PhotoImage(img)
+                
+            player_gif_path = os.path.join(self.gifs_path, "carrasco-parado.gif")
+            if os.path.exists(player_gif_path):
+                player_gif = Image.open(player_gif_path)
+                try:
+                    while True:
+                        frame = player_gif.copy().resize((250, 250), Image.Resampling.LANCZOS)
+                        self.player_frames.append(ImageTk.PhotoImage(frame))
+                        player_gif.seek(len(self.player_frames))
+                except EOFError:
+                    pass
+                    
+            enemy_gif_path = os.path.join(self.gifs_path, "finalboss.gif")
+            if os.path.exists(enemy_gif_path):
+                enemy_gif = Image.open(enemy_gif_path)
+                try:
+                    while True:
+                        frame = enemy_gif.copy().resize((250, 250), Image.Resampling.LANCZOS)
+                        self.enemy_frames.append(ImageTk.PhotoImage(frame))
+                        enemy_gif.seek(len(self.enemy_frames))
+                except EOFError:
+                    pass
         except:
             pass
         
@@ -73,31 +98,53 @@ class BattleSystem:
                                fill="cyan", font=("Arial", 12))
         
         # Sprites
-        self.canvas.create_oval(150, 250, 200, 300, fill="blue", outline="white", width=2, tags="player")
-        self.canvas.create_text(175, 320, text="Você", fill="white", font=("Arial", 12))
+        if self.player_frames:
+            self.player_sprite = self.canvas.create_image(175, 275, image=self.player_frames[0], tags="player")
+            self.player_frame_index = 0
+            self.animate_player()
+        else:
+            self.canvas.create_oval(150, 250, 200, 300, fill="blue", outline="white", width=2, tags="player")
+        self.canvas.create_text(175, 350, text="Você", fill="white", font=("Arial", 12))
         
-        self.canvas.create_oval(600, 250, 650, 300, fill="red", outline="white", width=2, tags="enemy")
-        self.canvas.create_text(625, 320, text=self.enemy.name, fill="white", font=("Arial", 12))
+        if self.enemy_frames:
+            self.enemy_sprite = self.canvas.create_image(1050, 275, image=self.enemy_frames[0], tags="enemy")
+            self.enemy_frame_index = 0
+            self.animate_enemy()
+        else:
+            self.canvas.create_oval(1025, 250, 1075, 300, fill="red", outline="white", width=2, tags="enemy")
+        self.canvas.create_text(1050, 350, text=self.enemy.name, fill="white", font=("Arial", 12))
         
         self.update_battle_display()
         self.create_battle_buttons(can_flee)
         
+    def animate_player(self):
+        if self.player_frames:
+            self.canvas.itemconfig(self.player_sprite, image=self.player_frames[self.player_frame_index])
+            self.player_frame_index = (self.player_frame_index + 1) % len(self.player_frames)
+            self.player_anim_id = self.root.after(100, self.animate_player)
+            
+    def animate_enemy(self):
+        if self.enemy_frames:
+            self.canvas.itemconfig(self.enemy_sprite, image=self.enemy_frames[self.enemy_frame_index])
+            self.enemy_frame_index = (self.enemy_frame_index + 1) % len(self.enemy_frames)
+            self.enemy_anim_id = self.root.after(100, self.animate_enemy)
+    
     def update_battle_display(self):
         # Barras de HP
         # Jogador
         player_hp_percent = self.player.hp / self.player.max_hp
-        self.canvas.create_rectangle(50, 150, 350, 170, fill="gray", outline="white")
-        self.canvas.create_rectangle(50, 150, 50 + (300 * player_hp_percent), 170, 
+        self.canvas.create_rectangle(50, 450, 350, 470, fill="gray", outline="white")
+        self.canvas.create_rectangle(50, 450, 50 + (300 * player_hp_percent), 470, 
                                      fill="green", outline="white")
-        self.canvas.create_text(200, 160, text=f"HP: {self.player.hp}/{self.player.max_hp}", 
+        self.canvas.create_text(200, 460, text=f"HP: {self.player.hp}/{self.player.max_hp}", 
                                fill="white", font=("Arial", 10, "bold"))
         
         # Inimigo
         enemy_hp_percent = self.enemy.hp / self.enemy.max_hp
-        self.canvas.create_rectangle(450, 150, 750, 170, fill="gray", outline="white")
-        self.canvas.create_rectangle(450, 150, 450 + (300 * enemy_hp_percent), 170, 
+        self.canvas.create_rectangle(930, 450, 1230, 470, fill="gray", outline="white")
+        self.canvas.create_rectangle(930, 450, 930 + (300 * enemy_hp_percent), 470, 
                                      fill="red", outline="white")
-        self.canvas.create_text(600, 160, text=f"HP: {self.enemy.hp}/{self.enemy.max_hp}", 
+        self.canvas.create_text(1080, 460, text=f"HP: {self.enemy.hp}/{self.enemy.max_hp}", 
                                fill="white", font=("Arial", 10, "bold"))
         
     def create_battle_buttons(self, can_flee):
@@ -156,11 +203,19 @@ class BattleSystem:
             messagebox.showinfo("Ataque", f"{attack_name}!\nCausou {total_damage} de dano!")
             self.canvas.delete("all")
             if self.battle_bg:
-                self.canvas.create_image(400, 300, image=self.battle_bg)
-            self.canvas.create_text(400, 50, text=f"BATALHA: {self.enemy.name}", 
+                self.canvas.create_image(640, 360, image=self.battle_bg)
+            self.canvas.create_text(640, 50, text=f"BATALHA: {self.enemy.name}", 
                                    fill="red", font=("Arial", 24, "bold"))
-            self.canvas.create_oval(150, 250, 200, 300, fill="blue", outline="white", width=2)
-            self.canvas.create_oval(600, 250, 650, 300, fill="red", outline="white", width=2)
+            if self.player_frames:
+                self.player_sprite = self.canvas.create_image(175, 275, image=self.player_frames[0])
+                self.animate_player()
+            else:
+                self.canvas.create_oval(150, 250, 200, 300, fill="blue", outline="white", width=2)
+            if self.enemy_frames:
+                self.enemy_sprite = self.canvas.create_image(1050, 275, image=self.enemy_frames[0])
+                self.animate_enemy()
+            else:
+                self.canvas.create_oval(1025, 250, 1075, 300, fill="red", outline="white", width=2)
             self.update_battle_display()
             self.enemy_turn()
         else:
@@ -182,11 +237,19 @@ class BattleSystem:
             messagebox.showinfo("Turno do Inimigo", f"{message}\nVocê recebeu {actual_damage} de dano!")
             self.canvas.delete("all")
             if self.battle_bg:
-                self.canvas.create_image(400, 300, image=self.battle_bg)
-            self.canvas.create_text(400, 50, text=f"BATALHA: {self.enemy.name}", 
+                self.canvas.create_image(640, 360, image=self.battle_bg)
+            self.canvas.create_text(640, 50, text=f"BATALHA: {self.enemy.name}", 
                                    fill="red", font=("Arial", 24, "bold"))
-            self.canvas.create_oval(150, 250, 200, 300, fill="blue", outline="white", width=2)
-            self.canvas.create_oval(600, 250, 650, 300, fill="red", outline="white", width=2)
+            if self.player_frames:
+                self.player_sprite = self.canvas.create_image(175, 275, image=self.player_frames[0])
+                self.animate_player()
+            else:
+                self.canvas.create_oval(150, 250, 200, 300, fill="blue", outline="white", width=2)
+            if self.enemy_frames:
+                self.enemy_sprite = self.canvas.create_image(1050, 275, image=self.enemy_frames[0])
+                self.animate_enemy()
+            else:
+                self.canvas.create_oval(1025, 250, 1075, 300, fill="red", outline="white", width=2)
             self.update_battle_display()
         else:
             messagebox.showinfo("Derrota", "Você foi derrotado!")

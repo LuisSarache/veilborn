@@ -12,6 +12,7 @@ from battle_system_fixed import BattleSystem
 from scenes_with_images import SceneManagerWithImages
 from visualization import GameVisualizer
 from ml_system import DifficultyAdjuster
+from video_player import VideoPlayer
 
 class VeilbornGame:
     def __init__(self):
@@ -25,9 +26,10 @@ class VeilbornGame:
         self.canvas.pack()
         
         # Paths
-        base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        self.images_path = os.path.join(base_path, "images")
-        self.gifs_path = os.path.join(base_path, "gifs")
+        base_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        self.images_path = os.path.join(base_path, "assets_game", "images")
+        self.gifs_path = os.path.join(base_path, "assets_game", "gifs")
+        self.videos_path = os.path.join(base_path, "assets_game", "videos")
         
         self.player = None
         self.scene_manager = None
@@ -149,25 +151,30 @@ Dano Recebido: {stats['total_damage_taken']}"""
             items = "\n".join([f"• {item}" for item in self.player.inventory])
             messagebox.showinfo("Inventário", f"Seus itens:\n\n{items}")
             
-    def spawn_enemy_scene3(self):
+    def spawn_enemy_scene2(self):
         self.canvas.create_oval(665, 235, 685, 255, fill="red", tags="enemy_spawn")
-        self.root.after(500, self.start_battle_scene3)
+        self.root.after(500, self.start_battle_scene2)
         
-    def start_battle_scene3(self):
-        base_stats = self.difficulty_adjuster.get_adjusted_enemy_stats(60, 15)
+    def start_battle_scene2(self):
+        base_stats = self.difficulty_adjuster.get_adjusted_enemy_stats(150, 35)
         enemy = Enemy("Bandido", base_stats["hp"], base_stats["attack"])
         
         battle = BattleSystem(self.canvas, self.root, self.player, enemy, 
-                            self.on_battle_end_scene3, self.visualizer)
+                            self.on_battle_end_scene2, self.visualizer)
         battle.start_battle(can_flee=True)
         
-    def on_battle_end_scene3(self, victory):
+    def on_battle_end_scene2(self, victory):
         if victory:
-            self.scene_manager.continue_scene3()
+            self.scene_manager.transition_to_scene3()
         else:
             self.scene_manager.show_defeat()
             
     def spawn_boss(self):
+        video_path = os.path.join(self.videos_path, "entrance_boss.mp4")
+        player = VideoPlayer(self.canvas, self.root, video_path, self.after_boss_video)
+        player.play()
+        
+    def after_boss_video(self):
         self.scene_manager.spawn_boss_animation()
         self.root.after(2000, self.start_boss_battle)
         
@@ -186,17 +193,14 @@ Dano Recebido: {stats['total_damage_taken']}"""
             self.scene_manager.show_defeat()
             
     def connect_scene_events(self):
-        original_move_scene3 = self.scene_manager.move_player_scene3
+        original_move_scene2 = self.scene_manager.move_player_scene2
         original_move_scene4 = self.scene_manager.move_player_scene4
         original_move_tomb = self.scene_manager.move_to_tomb
-        original_move_scene4_key = self.scene_manager.move_to_scene4_key
         
-        def enhanced_move_scene3(event):
-            result = original_move_scene3(event)
+        def enhanced_move_scene2(event):
+            result = original_move_scene2(event)
             if result == "spawn_enemy":
-                self.spawn_enemy_scene3()
-            elif result == "move_to_scene4":
-                self.scene_manager.transition_to_scene4()
+                self.spawn_enemy_scene2()
                 
         def enhanced_move_scene4(event):
             result = original_move_scene4(event)
@@ -208,15 +212,9 @@ Dano Recebido: {stats['total_damage_taken']}"""
             if result == "spawn_boss":
                 self.spawn_boss()
                 
-        def enhanced_move_scene4_key(event):
-            result = original_move_scene4_key(event)
-            if result == "move_to_scene4":
-                self.scene_manager.transition_to_scene4()
-                
-        self.scene_manager.move_player_scene3 = enhanced_move_scene3
+        self.scene_manager.move_player_scene2 = enhanced_move_scene2
         self.scene_manager.move_player_scene4 = enhanced_move_scene4
         self.scene_manager.move_to_tomb = enhanced_move_tomb
-        self.scene_manager.move_to_scene4_key = enhanced_move_scene4_key
         
     def run(self):
         self.root.mainloop()

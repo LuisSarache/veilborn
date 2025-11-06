@@ -11,9 +11,9 @@ class SceneManagerWithImages:
         self.current_scene = 1
         
         # Paths para assets
-        base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        self.images_path = os.path.join(base_path, "images")
-        self.gifs_path = os.path.join(base_path, "gifs")
+        base_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        self.images_path = os.path.join(base_path, "assets_game", "images")
+        self.gifs_path = os.path.join(base_path, "assets_game", "gifs")
         
         # Cache de imagens
         self.images = {}
@@ -50,6 +50,19 @@ class SceneManagerWithImages:
                 img = img.resize((100, 100), Image.Resampling.LANCZOS)
                 self.images["loading"] = ImageTk.PhotoImage(img)
             
+            # GIF do Boss animado
+            boss_path = os.path.join(self.gifs_path, "finalboss.gif")
+            if os.path.exists(boss_path):
+                self.boss_gif = Image.open(boss_path)
+                self.boss_frames = []
+                try:
+                    while True:
+                        frame = self.boss_gif.copy().resize((200, 200), Image.Resampling.LANCZOS)
+                        self.boss_frames.append(ImageTk.PhotoImage(frame))
+                        self.boss_gif.seek(len(self.boss_frames))
+                except EOFError:
+                    pass
+            
             # Carregar GIF animado do carrasco
             self.player_gif_path = os.path.join(self.gifs_path, "carrasco-parado.gif")
             if os.path.exists(self.player_gif_path):
@@ -72,6 +85,12 @@ class SceneManagerWithImages:
             self.canvas.itemconfig(self.player_sprite, image=self.player_frames[self.current_frame])
             self.current_frame = (self.current_frame + 1) % len(self.player_frames)
             self.animation_id = self.root.after(100, self.animate_player)
+    
+    def animate_boss(self):
+        if hasattr(self, 'boss_frames') and len(self.boss_frames) > 0:
+            self.canvas.itemconfig(self.boss_id, image=self.boss_frames[self.boss_frame_index])
+            self.boss_frame_index = (self.boss_frame_index + 1) % len(self.boss_frames)
+            self.boss_animation_id = self.root.after(100, self.animate_boss)
     
     def show_loading(self):
         self.canvas.delete("all")
@@ -172,11 +191,11 @@ class SceneManagerWithImages:
         if event.keysym == "Right" and self.player.x < 1200:
             self.player.move(10, 0)
             self.canvas.coords(self.player_sprite, self.player.x, self.player.y)
-            if self.player.x >= 1200:
+            if self.player.x >= 600:
                 self.root.unbind("<Key>")
                 if hasattr(self, 'animation_id'):
                     self.root.after_cancel(self.animation_id)
-                self.transition_to_scene3()
+                return "spawn_enemy"
                 
     def transition_to_scene3(self):
         self.show_loading()
@@ -185,69 +204,36 @@ class SceneManagerWithImages:
     def setup_scene3(self):
         self.canvas.delete("all")
         
-        # Fundo da cena 3
-        if "cena3" in self.images:
-            self.canvas.create_image(640, 360, image=self.images["cena3"])
+        if "cemiterio" in self.images:
+            self.canvas.create_image(640, 360, image=self.images["cemiterio"])
+        
+        self.canvas.create_text(640, 60, text="Cenário 3 - Entrada do Cemitério", fill="white", font=("Arial", 16), tags="ui")
+        
+        # Coveiro
+        if "coveiro" in self.images:
+            self.canvas.create_image(984, 420, image=self.images["coveiro"])
         else:
-            self.canvas.configure(bg="brown")
-            self.canvas.create_rectangle(960, 240, 1200, 420, fill="brown")
-            self.canvas.create_rectangle(1040, 264, 1120, 324, fill="lightblue", outline="black", width=2)
+            self.canvas.create_oval(960, 336, 1008, 372, fill="gray")
         
-        self.canvas.create_text(640, 60, text="Cenário 3 - Cidade", fill="white", font=("Arial", 16), tags="ui")
+        self.canvas.create_text(984, 340, text="Coveiro", fill="white", font=("Arial", 12), tags="ui")
         
-        self.player.x = 50
+        self.player.x = 100
         if hasattr(self, 'player_frames') and len(self.player_frames) > 0:
             self.player_sprite = self.canvas.create_image(self.player.x, self.player.y, image=self.player_frames[0])
             self.animate_player()
         else:
             self.player_sprite = self.canvas.create_oval(self.player.x-15, self.player.y-15, 
                                                         self.player.x+15, self.player.y+15, fill="blue")
-        self.steps = 0
         
-        self.root.bind("<Key>", self.move_player_scene3)
-        self.root.focus_set()
+        self.show_gravedigger_dialog()
         
     def move_player_scene3(self, event):
-        if event.keysym == "Right" and self.player.x < 1200:
-            self.player.move(10, 0)
-            self.steps += 1
-            self.canvas.coords(self.player_sprite, self.player.x, self.player.y)
-            
-            if self.steps == 2:
-                self.root.unbind("<Key>")
-                if hasattr(self, 'animation_id'):
-                    self.root.after_cancel(self.animation_id)
-                return "spawn_enemy"
-            elif self.player.x >= 1200:
-                self.root.unbind("<Key>")
-                if hasattr(self, 'animation_id'):
-                    self.root.after_cancel(self.animation_id)
-                return "move_to_scene4"
         return None
         
     def continue_scene3(self):
-        self.canvas.delete("all")
-        
-        if "cena3" in self.images:
-            self.canvas.create_image(640, 360, image=self.images["cena3"])
-        
-        self.canvas.create_text(640, 60, text="Cenário 3 - Cidade", fill="white", font=("Arial", 16), tags="ui")
-        if hasattr(self, 'player_frames') and len(self.player_frames) > 0:
-            self.player_sprite = self.canvas.create_image(self.player.x, self.player.y, image=self.player_frames[0])
-            self.animate_player()
-        else:
-            self.player_sprite = self.canvas.create_oval(self.player.x-15, self.player.y-15, 
-                                                        self.player.x+15, self.player.y+15, fill="blue")
-        
-        self.root.bind("<Key>", self.move_to_scene4_key)
-        self.root.focus_set()
+        self.transition_to_scene4()
         
     def move_to_scene4_key(self, event):
-        if event.keysym == "Right":
-            self.root.unbind("<Key>")
-            if hasattr(self, 'animation_id'):
-                self.root.after_cancel(self.animation_id)
-            return "move_to_scene4"
         return None
         
     def transition_to_scene4(self):
@@ -257,12 +243,12 @@ class SceneManagerWithImages:
     def setup_scene4(self):
         self.canvas.delete("all")
         
-        if "cena4" in self.images:
-            self.canvas.create_image(640, 360, image=self.images["cena4"])
+        if "cena3" in self.images:
+            self.canvas.create_image(640, 360, image=self.images["cena3"])
         else:
             self.canvas.configure(bg="gray")
         
-        self.canvas.create_text(640, 60, text="Cenário 4 - Praça", fill="white", font=("Arial", 16), tags="ui")
+        self.canvas.create_text(640, 60, text="Cenário 4 - Cidade Abandonada", fill="white", font=("Arial", 16), tags="ui")
         
         self.player.x = 50
         if hasattr(self, 'player_frames') and len(self.player_frames) > 0:
@@ -323,37 +309,7 @@ class SceneManagerWithImages:
         tk.Label(result_dialog, text=responses_dict[response], wraplength=350, justify="center").pack(pady=20)
         
         tk.Button(result_dialog, text="Continuar", 
-                 command=lambda: [result_dialog.destroy(), self.transition_to_cemetery()]).pack(pady=20)
-        
-    def transition_to_cemetery(self):
-        self.show_loading()
-        self.root.after(1500, self.setup_cemetery_entrance)
-        
-    def setup_cemetery_entrance(self):
-        self.canvas.delete("all")
-        
-        if "cemiterio" in self.images:
-            self.canvas.create_image(640, 360, image=self.images["cemiterio"])
-        
-        self.canvas.create_text(640, 60, text="Entrada do Cemitério", fill="white", font=("Arial", 16), tags="ui")
-        
-        # Coveiro
-        if "coveiro" in self.images:
-            self.canvas.create_image(984, 420, image=self.images["coveiro"])
-        else:
-            self.canvas.create_oval(960, 336, 1008, 372, fill="gray")
-        
-        self.canvas.create_text(984, 340, text="Coveiro", fill="white", font=("Arial", 12), tags="ui")
-        
-        self.player.x = 100
-        if hasattr(self, 'player_frames') and len(self.player_frames) > 0:
-            self.player_sprite = self.canvas.create_image(self.player.x, self.player.y, image=self.player_frames[0])
-            self.animate_player()
-        else:
-            self.player_sprite = self.canvas.create_oval(self.player.x-15, self.player.y-15, 
-                                                        self.player.x+15, self.player.y+15, fill="blue")
-        
-        self.show_gravedigger_dialog()
+                 command=lambda: [result_dialog.destroy(), self.enter_cemetery()]).pack(pady=20)
         
     def show_gravedigger_dialog(self):
         dialog = tk.Toplevel(self.root)
@@ -437,8 +393,13 @@ class SceneManagerWithImages:
         return None
         
     def spawn_boss_animation(self):
-        boss = self.canvas.create_oval(1040-20, 450-20, 1040+20, 450+20, fill="darkred", outline="red", width=3)
-        self.canvas.create_text(1040, 540, text="BOSS APARECEU!", fill="red", font=("Arial", 16, "bold"), tags="ui")
+        if hasattr(self, 'boss_frames') and len(self.boss_frames) > 0:
+            self.boss_id = self.canvas.create_image(1040, 450, image=self.boss_frames[0])
+            self.boss_frame_index = 0
+            self.animate_boss()
+        else:
+            self.canvas.create_oval(1040-20, 450-20, 1040+20, 450+20, fill="darkred", outline="red", width=3)
+        self.canvas.create_text(1040, 560, text="BOSS APARECEU!", fill="red", font=("Arial", 20, "bold"), tags="ui")
         
     def show_ending(self):
         self.canvas.delete("all")

@@ -63,7 +63,7 @@ class SceneManagerWithImages:
                 except EOFError:
                     pass
             
-            # Carregar GIF animado do carrasco
+            # Carregar GIF animado do carrasco parado
             self.player_gif_path = os.path.join(self.gifs_path, "carrasco-parado.gif")
             if os.path.exists(self.player_gif_path):
                 self.player_gif = Image.open(self.player_gif_path)
@@ -76,15 +76,40 @@ class SceneManagerWithImages:
                 except EOFError:
                     pass
                 self.current_frame = 0
+            
+            # Carregar GIF animado do carrasco andando
+            self.player_walking_path = os.path.join(self.gifs_path, "spriteandando.gif")
+            if os.path.exists(self.player_walking_path):
+                self.player_walking_gif = Image.open(self.player_walking_path)
+                self.player_walking_frames = []
+                self.player_walking_frames_left = []
+                try:
+                    while True:
+                        frame = self.player_walking_gif.copy().resize((180, 180), Image.Resampling.LANCZOS)
+                        self.player_walking_frames.append(ImageTk.PhotoImage(frame))
+                        frame_left = frame.transpose(Image.FLIP_LEFT_RIGHT)
+                        self.player_walking_frames_left.append(ImageTk.PhotoImage(frame_left))
+                        self.player_walking_gif.seek(len(self.player_walking_frames))
+                except EOFError:
+                    pass
                     
         except Exception as e:
             print(f"Erro ao carregar imagens: {e}")
     
     def animate_player(self):
-        if hasattr(self, 'player_frames') and len(self.player_frames) > 0:
-            self.canvas.itemconfig(self.player_sprite, image=self.player_frames[self.current_frame])
-            self.current_frame = (self.current_frame + 1) % len(self.player_frames)
-            self.animation_id = self.root.after(150, self.animate_player)
+        frames = self.player_frames
+        if hasattr(self, 'walking_direction') and self.walking_direction:
+            if self.walking_direction == 'right' and hasattr(self, 'player_walking_frames') and len(self.player_walking_frames) > 0:
+                frames = self.player_walking_frames
+            elif self.walking_direction == 'left' and hasattr(self, 'player_walking_frames_left') and len(self.player_walking_frames_left) > 0:
+                frames = self.player_walking_frames_left
+        
+        if frames and len(frames) > 0:
+            if self.current_frame >= len(frames):
+                self.current_frame = 0
+            self.canvas.itemconfig(self.player_sprite, image=frames[self.current_frame])
+            self.current_frame = (self.current_frame + 1) % len(frames)
+            self.animation_id = self.root.after(100, self.animate_player)
     
     def animate_boss(self):
         if hasattr(self, 'boss_frames') and len(self.boss_frames) > 0:
@@ -176,25 +201,38 @@ class SceneManagerWithImages:
         self.canvas.create_text(640, 60, text="Cenário 2 - Caminho Sombrio", fill="white", font=("Arial", 16), tags="ui")
         
         self.player.x = 50
+        self.walking_direction = None
         if hasattr(self, 'player_frames') and len(self.player_frames) > 0:
             self.player_sprite = self.canvas.create_image(self.player.x, self.player.y, image=self.player_frames[0])
+            self.current_frame = 0
             self.animate_player()
         else:
             self.player_sprite = self.canvas.create_oval(self.player.x-15, self.player.y-15, 
                                                         self.player.x+15, self.player.y+15, fill="blue")
         
-        self.root.bind("<Key>", self.move_player_scene2)
+        self.root.bind("<KeyPress>", self.move_player_scene2)
+        self.root.bind("<KeyRelease>", self.move_player_scene2)
         self.root.focus_set()
         
     def move_player_scene2(self, event):
-        if event.keysym == "Right" and self.player.x < 1200:
-            self.player.move(10, 0)
-            self.canvas.coords(self.player_sprite, self.player.x, self.player.y)
-            if self.player.x >= 600:
-                self.root.unbind("<Key>")
-                if hasattr(self, 'animation_id'):
-                    self.root.after_cancel(self.animation_id)
-                return "spawn_enemy"
+        if event.type == '2':  # KeyPress
+            if event.keysym == "Right" and self.player.x < 1200:
+                self.walking_direction = 'right'
+                self.player.move(10, 0)
+                self.canvas.coords(self.player_sprite, self.player.x, self.player.y)
+                if self.player.x >= 600:
+                    self.root.unbind("<KeyPress>")
+                    self.root.unbind("<KeyRelease>")
+                    if hasattr(self, 'animation_id'):
+                        self.root.after_cancel(self.animation_id)
+                    self.walking_direction = None
+                    return "spawn_enemy"
+            elif event.keysym == "Left" and self.player.x > 50:
+                self.walking_direction = 'left'
+                self.player.move(-10, 0)
+                self.canvas.coords(self.player_sprite, self.player.x, self.player.y)
+        elif event.type == '3':  # KeyRelease
+            self.walking_direction = None
         return None
                 
     def transition_to_scene3(self):
@@ -212,25 +250,38 @@ class SceneManagerWithImages:
         self.canvas.create_text(640, 60, text="Cenário 3 - Cidade Abandonada", fill="white", font=("Arial", 16), tags="ui")
         
         self.player.x = 50
+        self.walking_direction = None
         if hasattr(self, 'player_frames') and len(self.player_frames) > 0:
             self.player_sprite = self.canvas.create_image(self.player.x, self.player.y, image=self.player_frames[0])
+            self.current_frame = 0
             self.animate_player()
         else:
             self.player_sprite = self.canvas.create_oval(self.player.x-15, self.player.y-15, 
                                                         self.player.x+15, self.player.y+15, fill="blue")
         
-        self.root.bind("<Key>", self.move_player_scene3)
+        self.root.bind("<KeyPress>", self.move_player_scene3)
+        self.root.bind("<KeyRelease>", self.move_player_scene3)
         self.root.focus_set()
         
     def move_player_scene3(self, event):
-        if event.keysym == "Right" and self.player.x < 1120:
-            self.player.move(10, 0)
-            self.canvas.coords(self.player_sprite, self.player.x, self.player.y)
-            if self.player.x >= 1120:
-                self.root.unbind("<Key>")
-                if hasattr(self, 'animation_id'):
-                    self.root.after_cancel(self.animation_id)
-                return "show_npc_dialog"
+        if event.type == '2':  # KeyPress
+            if event.keysym == "Right" and self.player.x < 1120:
+                self.walking_direction = 'right'
+                self.player.move(10, 0)
+                self.canvas.coords(self.player_sprite, self.player.x, self.player.y)
+                if self.player.x >= 1120:
+                    self.root.unbind("<KeyPress>")
+                    self.root.unbind("<KeyRelease>")
+                    if hasattr(self, 'animation_id'):
+                        self.root.after_cancel(self.animation_id)
+                    self.walking_direction = None
+                    return "show_npc_dialog"
+            elif event.keysym == "Left" and self.player.x > 50:
+                self.walking_direction = 'left'
+                self.player.move(-10, 0)
+                self.canvas.coords(self.player_sprite, self.player.x, self.player.y)
+        elif event.type == '3':  # KeyRelease
+            self.walking_direction = None
         return None
         
     def continue_scene3(self):
@@ -370,25 +421,38 @@ class SceneManagerWithImages:
         self.canvas.create_text(1040, 384, text="Túmulo", fill="white", font=("Arial", 12), tags="ui")
         
         self.player.x = 50
+        self.walking_direction = None
         if hasattr(self, 'player_frames') and len(self.player_frames) > 0:
             self.player_sprite = self.canvas.create_image(self.player.x, self.player.y, image=self.player_frames[0])
+            self.current_frame = 0
             self.animate_player()
         else:
             self.player_sprite = self.canvas.create_oval(self.player.x-15, self.player.y-15, 
                                                         self.player.x+15, self.player.y+15, fill="blue")
         
-        self.root.bind("<Key>", self.move_to_tomb)
+        self.root.bind("<KeyPress>", self.move_to_tomb)
+        self.root.bind("<KeyRelease>", self.move_to_tomb)
         self.root.focus_set()
         
     def move_to_tomb(self, event):
-        if event.keysym == "Right" and self.player.x < 880:
-            self.player.move(10, 0)
-            self.canvas.coords(self.player_sprite, self.player.x, self.player.y)
-            if self.player.x >= 880:
-                self.root.unbind("<Key>")
-                if hasattr(self, 'animation_id'):
-                    self.root.after_cancel(self.animation_id)
-                return "spawn_boss"
+        if event.type == '2':  # KeyPress
+            if event.keysym == "Right" and self.player.x < 880:
+                self.walking_direction = 'right'
+                self.player.move(10, 0)
+                self.canvas.coords(self.player_sprite, self.player.x, self.player.y)
+                if self.player.x >= 880:
+                    self.root.unbind("<KeyPress>")
+                    self.root.unbind("<KeyRelease>")
+                    if hasattr(self, 'animation_id'):
+                        self.root.after_cancel(self.animation_id)
+                    self.walking_direction = None
+                    return "spawn_boss"
+            elif event.keysym == "Left" and self.player.x > 50:
+                self.walking_direction = 'left'
+                self.player.move(-10, 0)
+                self.canvas.coords(self.player_sprite, self.player.x, self.player.y)
+        elif event.type == '3':  # KeyRelease
+            self.walking_direction = None
         return None
         
     def spawn_boss_animation(self):

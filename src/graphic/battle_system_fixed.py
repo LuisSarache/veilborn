@@ -100,20 +100,20 @@ class BattleSystem:
         
         # Sprites
         if self.player_frames:
-            self.player_sprite = self.canvas.create_image(175, 275, image=self.player_frames[0], tags="player")
+            self.player_sprite = self.canvas.create_image(250, 320, image=self.player_frames[0], tags="player")
             self.player_frame_index = 0
             self.animate_player()
         else:
-            self.canvas.create_oval(150, 250, 200, 300, fill="blue", outline="white", width=2, tags="player")
-        self.canvas.create_text(175, 350, text="Você", fill="white", font=("Arial", 12))
+            self.canvas.create_oval(225, 295, 275, 345, fill="blue", outline="white", width=2, tags="player")
+        self.canvas.create_text(250, 420, text="Você", fill="white", font=("Arial", 12))
         
         if self.enemy_frames:
-            self.enemy_sprite = self.canvas.create_image(1050, 275, image=self.enemy_frames[0], tags="enemy")
+            self.enemy_sprite = self.canvas.create_image(1030, 320, image=self.enemy_frames[0], tags="enemy")
             self.enemy_frame_index = 0
             self.animate_enemy()
         else:
-            self.canvas.create_oval(1025, 250, 1075, 300, fill="red", outline="white", width=2, tags="enemy")
-        self.canvas.create_text(1050, 350, text=self.enemy.name, fill="white", font=("Arial", 12))
+            self.canvas.create_oval(1005, 295, 1055, 345, fill="red", outline="white", width=2, tags="enemy")
+        self.canvas.create_text(1030, 420, text=self.enemy.name, fill="white", font=("Arial", 12))
         
         self.update_battle_display()
         self.create_battle_buttons(can_flee)
@@ -208,15 +208,15 @@ class BattleSystem:
             self.canvas.create_text(640, 50, text=f"BATALHA: {self.enemy.name}", 
                                    fill="red", font=("Arial", 24, "bold"))
             if self.player_frames:
-                self.player_sprite = self.canvas.create_image(175, 275, image=self.player_frames[0])
+                self.player_sprite = self.canvas.create_image(250, 320, image=self.player_frames[0])
                 self.animate_player()
             else:
-                self.canvas.create_oval(150, 250, 200, 300, fill="blue", outline="white", width=2)
+                self.canvas.create_oval(225, 295, 275, 345, fill="blue", outline="white", width=2)
             if self.enemy_frames:
-                self.enemy_sprite = self.canvas.create_image(1050, 275, image=self.enemy_frames[0])
+                self.enemy_sprite = self.canvas.create_image(1030, 320, image=self.enemy_frames[0])
                 self.animate_enemy()
             else:
-                self.canvas.create_oval(1025, 250, 1075, 300, fill="red", outline="white", width=2)
+                self.canvas.create_oval(1005, 295, 1055, 345, fill="red", outline="white", width=2)
             self.update_battle_display()
             self.enemy_turn()
         else:
@@ -242,15 +242,15 @@ class BattleSystem:
             self.canvas.create_text(640, 50, text=f"BATALHA: {self.enemy.name}", 
                                    fill="red", font=("Arial", 24, "bold"))
             if self.player_frames:
-                self.player_sprite = self.canvas.create_image(175, 275, image=self.player_frames[0])
+                self.player_sprite = self.canvas.create_image(250, 320, image=self.player_frames[0])
                 self.animate_player()
             else:
-                self.canvas.create_oval(150, 250, 200, 300, fill="blue", outline="white", width=2)
+                self.canvas.create_oval(225, 295, 275, 345, fill="blue", outline="white", width=2)
             if self.enemy_frames:
-                self.enemy_sprite = self.canvas.create_image(1050, 275, image=self.enemy_frames[0])
+                self.enemy_sprite = self.canvas.create_image(1030, 320, image=self.enemy_frames[0])
                 self.animate_enemy()
             else:
-                self.canvas.create_oval(1025, 250, 1075, 300, fill="red", outline="white", width=2)
+                self.canvas.create_oval(1005, 295, 1055, 345, fill="red", outline="white", width=2)
             self.update_battle_display()
         else:
             messagebox.showinfo("Derrota", "Você foi derrotado!")

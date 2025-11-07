@@ -299,16 +299,323 @@ No coração da cripta, você encontra o **Necromante Sombrio** (HP: 250, ATK: 5
 
 Ambas as versões incluem IA adaptativa usando **Random Forest** e **Logistic Regression**.
 
-### **Funcionalidades:**
+### **📊 MODELOS IMPLEMENTADOS**
 
-#### 1. **Ajuste Dinâmico de Dificuldade**
-- Monitora últimas 10 batalhas
-- **Win rate > 80%**: Aumenta HP/ATK dos inimigos em até 50%
-- **Win rate < 30%**: Diminui HP/ATK dos inimigos em até 50%
+#### **1. RandomForestClassifier** 🌲
+**Arquivo:** `src/graphic/ml_system.py` e `src/terminal/ml_terminal.py`  
+**Classe:** `BattleDifficultyClassifier`
 
-#### 2. **Predição de Vitória**
-- Usa Random Forest treinado com 1000 cenários simulados
-- Mostra probabilidade de vitória durante batalhas
+**Configuração:**
+```python
+from sklearn.ensemble import RandomForestClassifier
+model = RandomForestClassifier(n_estimators=50, random_state=42)
+```
+
+**Função:** Classifica a dificuldade da batalha em 3 níveis
+
+**Input (5 features):**
+- `player_level` - Nível do jogador
+- `player_hp` - HP atual do jogador
+- `player_attack` - Ataque do jogador
+- `enemy_hp` - HP do inimigo
+- `enemy_attack` - Ataque do inimigo
+
+**Output (3 classes):**
+- `0` = Fácil
+- `1` = Médio
+- `2` = Difícil
+
+**Onde é usado:**
+- `battle_system_fixed.py` (linha ~150): Exibe "Dificuldade: Médio" na tela de batalha
+- `battle_terminal.py`: Mostra dificuldade no terminal
+
+---
+
+#### **2. LogisticRegression** 📈
+**Arquivo:** `src/graphic/ml_system.py` e `src/terminal/ml_terminal.py`  
+**Classe:** `VictoryPredictor`
+
+**Configuração:**
+```python
+from sklearn.linear_model import LogisticRegression
+model = LogisticRegression(random_state=42)
+```
+
+**Função:** Prediz probabilidade de vitória do jogador (0% a 100%)
+
+**Input (6 features):**
+- `player_level` - Nível do jogador
+- `player_hp` - HP atual do jogador
+- `player_attack` - Ataque do jogador
+- `player_defense` - Defesa do jogador
+- `enemy_hp` - HP do inimigo
+- `enemy_attack` - Ataque do inimigo
+
+**Output:**
+- Probabilidade entre `0.0` e `1.0` (convertida para porcentagem)
+
+**Onde é usado:**
+- `battle_system_fixed.py` (linha ~155): Exibe "Vitória: 65%" na tela de batalha
+- `battle_terminal.py`: Mostra probabilidade no terminal
+
+---
+
+#### **3. StandardScaler** 🔧
+**Arquivo:** `src/graphic/ml_system.py` e `src/terminal/ml_terminal.py`
+
+**Configuração:**
+```python
+from sklearn.preprocessing import StandardScaler
+scaler = StandardScaler()
+```
+
+**Função:** Normaliza dados usando Z-score: `(valor - média) / desvio_padrão`
+
+**Onde é usado:**
+- Pré-processamento de features antes de treinar os modelos
+- Normalização de dados durante predições em tempo real
+
+---
+
+#### **4. DifficultyAdjuster** 🎯
+**Arquivo:** `src/graphic/ml_system.py` e `src/terminal/ml_terminal.py`  
+**Classe:** `DifficultyAdjuster`
+
+**Função:** Sistema adaptativo que ajusta dificuldade baseado em desempenho
+
+**Algoritmo:**
+```python
+# Analisa últimas 10 batalhas
+win_rate = vitórias / total_batalhas
+
+if win_rate > 0.8:    # Jogador dominando
+    multiplicador = 1.5  # +50% HP/ATK inimigos
+elif win_rate < 0.3:  # Jogador com dificuldade
+    multiplicador = 0.5  # -50% HP/ATK inimigos
+else:
+    multiplicador = 1.0  # Balanceado
+```
+
+**Onde é usado:**
+- `battle_system_fixed.py`: Ajusta stats dos inimigos após cada batalha
+- `battle_terminal.py`: Ajusta dificuldade dinamicamente
+
+---
+
+### **📚 BIBLIOTECAS UTILIZADAS**
+
+#### **1. scikit-learn** 🤖
+**Instalação:** `pip install scikit-learn`
+
+**Módulos usados:**
+- `sklearn.ensemble.RandomForestClassifier` - Classificação de dificuldade
+- `sklearn.linear_model.LogisticRegression` - Predição de vitória
+- `sklearn.preprocessing.StandardScaler` - Normalização de dados
+- `sklearn.model_selection.train_test_split` - Divisão de dados (treino/teste)
+
+**Arquivos:**
+- `src/graphic/ml_system.py` (linhas 1-10)
+- `src/terminal/ml_terminal.py` (linhas 1-10)
+
+---
+
+#### **2. tkinter** 🖼️
+**Instalação:** Incluído no Python padrão
+
+**Módulos usados:**
+- `tkinter.Tk` - Janela principal
+- `tkinter.Canvas` - Renderização de gráficos e sprites
+- `tkinter.Label` - Textos e diálogos
+- `tkinter.Button` - Botões interativos
+- `tkinter.Frame` - Containers de layout
+
+**Arquivos:**
+- `src/graphic/game_with_menu.py` - Menu principal
+- `src/graphic/scenes_with_images.py` - Sistema de cenas
+- `src/graphic/battle_system_fixed.py` - Interface de batalha
+- `src/graphic/visualization.py` - Gráficos de estatísticas
+
+---
+
+#### **3. Pillow (PIL)** 🎨
+**Instalação:** `pip install pillow`
+
+**Módulos usados:**
+- `PIL.Image` - Carregamento de imagens PNG/JPG
+- `PIL.ImageTk` - Conversão para formato Tkinter
+- `PIL.ImageOps` - Operações (flip horizontal para movimento)
+
+**Arquivos:**
+- `src/graphic/scenes_with_images.py` (linhas 5-7): Carrega GIFs animados
+- `src/graphic/asset_manager.py`: Gerencia cache de imagens
+- `src/graphic/battle_system_fixed.py`: Carrega sprites de batalha
+
+**Exemplos de uso:**
+```python
+# Carregar GIF animado
+from PIL import Image, ImageTk
+img = Image.open("assets_game/gifs/carrasco-parado.gif")
+photo = ImageTk.PhotoImage(img)
+
+# Flip horizontal para movimento esquerdo
+img_flipped = ImageOps.mirror(img)
+```
+
+---
+
+#### **4. opencv-python (cv2)** 🎬
+**Instalação:** `pip install opencv-python`
+
+**Módulos usados:**
+- `cv2.VideoCapture` - Leitura de vídeos MP4
+- `cv2.cvtColor` - Conversão BGR → RGB
+- `cv2.resize` - Redimensionamento de frames
+
+**Arquivos:**
+- `src/graphic/video_player.py` (linhas 1-3): Reproduz cutscene do boss
+
+**Exemplo de uso:**
+```python
+import cv2
+cap = cv2.VideoCapture("assets_game/videos/entrance_boss.mp4")
+ret, frame = cap.read()
+frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+```
+
+---
+
+#### **5. numpy** 🔢
+**Instalação:** `pip install numpy`
+
+**Módulos usados:**
+- `numpy.array` - Arrays para ML
+- `numpy.random` - Geração de dados simulados
+- `numpy.mean`, `numpy.std` - Estatísticas
+
+**Arquivos:**
+- `src/graphic/ml_system.py` (linha 2): Processamento de features
+- `src/terminal/ml_terminal.py`: Cálculos de batalha
+
+**Exemplo de uso:**
+```python
+import numpy as np
+features = np.array([[level, hp, attack, defense, enemy_hp, enemy_attack]])
+prediction = model.predict(features)
+```
+
+---
+
+#### **6. matplotlib** 📊
+**Instalação:** `pip install matplotlib`
+
+**Módulos usados:**
+- `matplotlib.pyplot` - Criação de gráficos
+- `matplotlib.backends.backend_tkagg` - Integração com Tkinter
+
+**Arquivos:**
+- `src/graphic/visualization.py` (linhas 1-3): Gráficos de estatísticas do jogador
+
+**Exemplo de uso:**
+```python
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+
+fig, ax = plt.subplots()
+ax.bar(['HP', 'ATK', 'DEF'], [120, 30, 10])
+canvas = FigureCanvasTkAgg(fig, master=window)
+```
+
+---
+
+#### **7. pandas** 📋
+**Instalação:** `pip install pandas`
+
+**Módulos usados:**
+- `pandas.DataFrame` - Estruturação de dados de batalha
+
+**Arquivos:**
+- `src/graphic/ml_system.py` (linha 3): Organiza histórico de batalhas
+- `src/terminal/ml_terminal.py`: Análise de estatísticas
+
+**Exemplo de uso:**
+```python
+import pandas as pd
+battle_history = pd.DataFrame({
+    'enemy': ['Bandido', 'Boss'],
+    'result': ['win', 'win'],
+    'damage_dealt': [150, 220]
+})
+```
+
+---
+
+#### **8. pygame** 🎵
+**Instalação:** `pip install pygame`
+
+**Módulos usados:**
+- `pygame.mixer` - Sistema de áudio (música e efeitos sonoros)
+
+**Arquivos:**
+- `src/graphic/game_with_menu.py` (linha 8): Música de fundo do menu
+- `src/graphic/battle_system_fixed.py`: Efeitos sonoros de batalha
+
+**Exemplo de uso:**
+```python
+import pygame
+pygame.mixer.init()
+pygame.mixer.music.load("assets_game/audio/theme.mp3")
+pygame.mixer.music.play(-1)  # Loop infinito
+```
+
+---
+
+### **🎯 TREINAMENTO DOS MODELOS**
+
+**Quando:** Na inicialização do jogo (`ml_system.py` é importado)
+
+**Dados de treino:**
+- **1000 cenários simulados** gerados aleatoriamente
+- Combinações de níveis, HP, ataque, defesa variados
+- Labels calculados baseados em regras de balanceamento
+
+**Código de treinamento:**
+```python
+# Gera 1000 batalhas simuladas
+for i in range(1000):
+    player_level = random.randint(1, 10)
+    player_hp = random.randint(50, 200)
+    player_attack = random.randint(20, 50)
+    enemy_hp = random.randint(50, 250)
+    enemy_attack = random.randint(20, 60)
+    
+    # Calcula dificuldade e resultado
+    difficulty = calculate_difficulty(...)
+    victory_chance = calculate_victory(...)
+    
+    training_data.append([...])
+
+# Treina modelos
+rf_model.fit(X_train, y_difficulty)
+lr_model.fit(X_train, y_victory)
+```
+
+---
+
+### **💡 FUNCIONALIDADES EM TEMPO REAL**
+
+#### **Durante Batalhas:**
+1. **Predição de Dificuldade** (RandomForest)
+   - Executado ao iniciar batalha
+   - Exibido na interface: "Dificuldade: Médio"
+
+2. **Predição de Vitória** (LogisticRegression)
+   - Executado ao iniciar batalha
+   - Exibido na interface: "Vitória: 65%"
+
+3. **Ajuste Adaptativo** (DifficultyAdjuster)
+   - Executado após cada batalha
+   - Modifica stats dos próximos inimigos
+   - Invisível ao jogador (balanceamento automático)
 
 ---
 

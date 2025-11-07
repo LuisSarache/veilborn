@@ -46,9 +46,15 @@ class SceneManagerWithImages:
             
             loading_path = os.path.join(self.gifs_path, "loading.gif")
             if os.path.exists(loading_path):
-                img = Image.open(loading_path)
-                img = img.resize((200, 200), Image.Resampling.LANCZOS)
-                self.images["loading"] = ImageTk.PhotoImage(img)
+                self.loading_gif = Image.open(loading_path)
+                self.loading_frames = []
+                try:
+                    while True:
+                        frame = self.loading_gif.copy().resize((1280, 720), Image.Resampling.LANCZOS)
+                        self.loading_frames.append(ImageTk.PhotoImage(frame))
+                        self.loading_gif.seek(len(self.loading_frames))
+                except EOFError:
+                    pass
             
             # GIF do Boss animado
             boss_path = os.path.join(self.gifs_path, "finalboss.gif")
@@ -119,12 +125,23 @@ class SceneManagerWithImages:
     
     def show_loading(self):
         self.canvas.delete("all")
-        if "loading" in self.images:
-            self.canvas.create_image(640, 360, image=self.images["loading"])
+        self.canvas.configure(bg="black")
+        if hasattr(self, 'loading_frames') and len(self.loading_frames) > 0:
+            self.loading_frame_index = 0
+            self.loading_sprite = self.canvas.create_image(640, 360, image=self.loading_frames[0])
+            self.animate_loading()
         else:
             self.canvas.create_text(640, 360, text="Carregando...", fill="white", font=("Arial", 20))
+    
+    def animate_loading(self):
+        if hasattr(self, 'loading_frames') and len(self.loading_frames) > 0 and hasattr(self, 'loading_sprite'):
+            self.canvas.itemconfig(self.loading_sprite, image=self.loading_frames[self.loading_frame_index])
+            self.loading_frame_index = (self.loading_frame_index + 1) % len(self.loading_frames)
+            self.loading_anim_id = self.root.after(100, self.animate_loading)
         
     def setup_scene1(self):
+        if hasattr(self, 'loading_anim_id'):
+            self.root.after_cancel(self.loading_anim_id)
         self.canvas.delete("all")
         
         # Fundo da cena 1
@@ -190,6 +207,8 @@ class SceneManagerWithImages:
         self.root.after(1500, self.setup_scene2)
         
     def setup_scene2(self):
+        if hasattr(self, 'loading_anim_id'):
+            self.root.after_cancel(self.loading_anim_id)
         self.canvas.delete("all")
         
         if "cena2" in self.images:
@@ -240,6 +259,8 @@ class SceneManagerWithImages:
         self.root.after(1500, self.setup_scene3)
         
     def setup_scene3(self):
+        if hasattr(self, 'loading_anim_id'):
+            self.root.after_cancel(self.loading_anim_id)
         self.canvas.delete("all")
         
         if "cena3" in self.images:
@@ -295,6 +316,8 @@ class SceneManagerWithImages:
         self.root.after(1500, self.setup_scene4)
         
     def setup_scene4(self):
+        if hasattr(self, 'loading_anim_id'):
+            self.root.after_cancel(self.loading_anim_id)
         self.canvas.delete("all")
         
         if "cemiterio" in self.images:
@@ -411,6 +434,8 @@ class SceneManagerWithImages:
         self.root.after(1500, self.setup_cemetery_inside)
         
     def setup_cemetery_inside(self):
+        if hasattr(self, 'loading_anim_id'):
+            self.root.after_cancel(self.loading_anim_id)
         self.canvas.delete("all")
         
         if "cemiterio" in self.images:

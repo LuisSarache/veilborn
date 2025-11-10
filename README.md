@@ -667,7 +667,7 @@ lr_model.fit(X_train, y_victory)
 
 ## 👥 CRÉDITOS
 
-**Desenvolvimento:** Equipe Veilborn  
+**Desenvolvimento:** Equipe Veilborn - Luis, Kevin e Vitor
 **Engine:** Python + Tkinter  
 **IA:** scikit-learn (Random Forest)  
 **História:** Narrativa original

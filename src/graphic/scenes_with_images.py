@@ -76,7 +76,7 @@ class SceneManagerWithImages:
                 self.player_frames = []
                 try:
                     while True:
-                        frame = self.player_gif.copy().resize((180, 180), Image.Resampling.LANCZOS)
+                        frame = self.player_gif.copy().resize((300, 300), Image.Resampling.LANCZOS)
                         self.player_frames.append(ImageTk.PhotoImage(frame))
                         self.player_gif.seek(len(self.player_frames))
                 except EOFError:
@@ -91,7 +91,7 @@ class SceneManagerWithImages:
                 self.player_walking_frames_left = []
                 try:
                     while True:
-                        frame = self.player_walking_gif.copy().resize((180, 180), Image.Resampling.LANCZOS)
+                        frame = self.player_walking_gif.copy().resize((300, 300), Image.Resampling.LANCZOS)
                         self.player_walking_frames.append(ImageTk.PhotoImage(frame))
                         frame_left = frame.transpose(Image.FLIP_LEFT_RIGHT)
                         self.player_walking_frames_left.append(ImageTk.PhotoImage(frame_left))
